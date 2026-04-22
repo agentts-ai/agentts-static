@@ -759,10 +759,19 @@
     return (text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  // Auto-refresh a cada 30s
-  setInterval(() => {
-    init();
-    if (currentLeadId) selectLead(currentLeadId);
+  // Auto-refresh a cada 30s — não reseta scroll da conversa aberta
+  setInterval(async () => {
+    await init();
+    if (currentLeadId) {
+      try {
+        const msgs = await query('conversas', `?lead_id=eq.${currentLeadId}&order=created_at.asc&limit=200`);
+        const container = document.getElementById('messages-container');
+        const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
+        document.getElementById('chat-msgs-count').textContent = msgs.length;
+        renderMessages(msgs);
+        if (atBottom) container.scrollTop = container.scrollHeight;
+      } catch(e) {}
+    }
   }, 30000);
 
   init();
