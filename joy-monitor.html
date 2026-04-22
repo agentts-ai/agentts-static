@@ -4,38 +4,72 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Joy Monitor — Hello Joy</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* Premium Light / Lavanda / Rosé Theme */
-    --bg: #FAFAFB;
+    /* Premium Gold & White Theme */
+    --bg: #F8F9FA;
     --surface: #FFFFFF;
-    --surface2: #F3F0F5;
-    --border: #E8E4EB;
-    --border-light: #F0EDF2;
-    --accent: #B288C0; /* Lavanda sofisticado */
-    --accent-hover: #9E74AB;
-    --accent-gradient: linear-gradient(135deg, #C296D0, #A17BB0);
-    --text: #2D2434; /* Violeta/cinza escuro */
-    --text-muted: #82788A;
-    --joy-bg: #F8F4FA; /* Lavanda muito claro */
-    --joy-border: #E6D8EF;
-    --joy-text: #45315D;
+    --surface2: #F1F3F5;
+    --border: #E9ECEF;
+    --border-light: #F8F9FA;
+    --accent: #D4AF37; /* Royal Gold */
+    --accent-hover: #B8860B;
+    --accent-gradient: linear-gradient(135deg, #D4AF37, #F9E29C);
+    --text: #1A1A1B;
+    --text-muted: #6C757D;
+    --joy-bg: #FFFDF5; /* Soft Gold Tint */
+    --joy-border: #F3E5AB;
+    --joy-text: #4B3F1B;
     --lead-bg: #FFFFFF;
-    --lead-border: #E8E4EB;
-    --lead-text: #3D3545;
+    --lead-border: #DEE2E6;
+    --lead-text: #212529;
     
     /* Status Colors */
     --status-triagem: #D97706;
-    --status-triagem-bg: #FEF3C7;
+    --status-triagem-bg: #FFFBEB;
     --status-handoff: #059669;
-    --status-handoff-bg: #D1FAE5;
-    --status-qualificado: #4F46E5;
-    --status-qualificado-bg: #E0E7FF;
+    --status-handoff-bg: #ECFDF5;
+    --status-qualificado: #D4AF37;
+    --status-qualificado-bg: #FFFDF5;
     
     /* Shadows */
-    --shadow-sm: 0 2px 8px rgba(45, 36, 52, 0.04);
-    --shadow-md: 0 4px 16px rgba(45, 36, 52, 0.08);
+    --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.03);
+    --shadow-md: 0 8px 24px rgba(212, 175, 55, 0.08);
+
+    /* AI / Insight Styles */
+    --insight-bg: rgba(255, 255, 255, 0.8);
+    --insight-border: rgba(212, 175, 55, 0.3);
+    --insight-accent: #D4AF37;
+
+    --bg-glass: rgba(255, 255, 255, 0.7);
+    --border-glass: rgba(212, 175, 55, 0.1);
+  }
+
+  /* Role-based Message Styling */
+  .msg-row.role-vendedora .msg-bubble {
+    border-left: 4px solid var(--status-handoff);
+    background: #f0fff4;
+  }
+  .msg-row.role-admin .msg-bubble {
+    border-left: 4px solid var(--accent);
+    background: #f5f3ff;
+  }
+
+  .handoff-badge-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+  }
+
+  .handoff-timestamp {
+    font-size: 10px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -599,13 +633,64 @@
       <div class="chat-lead-info">
         <div class="name" id="chat-name">—</div>
         <div class="sub" id="chat-phone">—</div>
+        <div id="handoff-tag" style="display: none;" class="handoff-badge-container">
+          <span class="live-badge" style="background: var(--status-handoff-bg); color: var(--status-handoff); border-color: var(--status-handoff); width: fit-content;">
+            🤝 Atendimento com: <strong id="vendedora-nome" style="margin-left:5px">...</strong>
+          </span>
+          <div id="handoff-time" class="handoff-timestamp">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            Iniciado em: ...
+          </div>
+        </div>
       </div>
       <div class="chat-meta">
         <div class="meta-pill">Status: <span id="chat-status">—</span></div>
         <div class="meta-pill">Score: <span id="chat-score">—</span></div>
-        <div class="meta-pill">Msgs: <span id="chat-msgs-count">—</span></div>
+        <button class="refresh-btn" style="padding: 4px 8px; font-size: 11px;" onclick="toggleDossie()">✨ Ver Dossiê</button>
       </div>
     </div>
+
+    <!-- AI DOSSIE CARD -->
+    <div id="dossie-card" style="display:none; padding: 24px 32px; background: var(--bg-glass); backdrop-filter: blur(20px); border-bottom: 2px solid var(--accent); animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+        <h4 style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); display:flex; align-items:center; gap:12px;">
+          <span style="background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">✨ Dossiê Estratégico Joy</span>
+        </h4>
+        <button onclick="toggleDossie()" style="background: rgba(0,0,0,0.05); border:none; border-radius: 50%; width: 24px; height: 24px; color:var(--text-muted); cursor:pointer; font-size:16px;">&times;</button>
+      </div>
+      <div id="dossie-content" style="font-size: 14px; line-height: 1.8; color: var(--text); background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--insight-border); box-shadow: var(--shadow-md); position: relative; overflow: hidden;">
+        <div style="position: absolute; top:0; left:0; width:4px; height:100%; background: var(--accent-gradient);"></div>
+        Aguardando análise estratégica da Joy...
+      </div>
+    </div>
+
+    <style>
+      @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-30px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .role-vendedora { border-left: 4px solid var(--status-handoff) !important; }
+      .role-admin { border-left: 4px solid var(--accent) !important; }
+      
+      .shimmer {
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        background-size: 200% 100%;
+        animation: shimmer 2s infinite;
+      }
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      #dossie-content::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.05), transparent);
+        background-size: 200% 100%;
+        animation: shimmer 3s infinite linear;
+        pointer-events: none;
+      }
+    </style>
     <div id="messages-container" class="messages">
       <div class="empty-state">
         <div class="empty-icon">
@@ -663,7 +748,8 @@
 
   async function init() {
     try {
-      leads = await query('leads', '?select=*&order=last_message_at.desc.nullslast,created_at.desc&limit=30');
+      // Join vendedoras(nome) para saber quem pegou o handoff
+      leads = await query('leads', '?select=*,vendedoras(nome)&order=last_message_at.desc.nullslast,created_at.desc&limit=50');
       renderLeads();
       updateStats();
     } catch(e) {
@@ -689,22 +775,27 @@
       return;
     }
 
-    container.innerHTML = leads.map(l => `
-      <div class="lead-card ${l.id === currentLeadId ? 'active' : ''}" onclick="selectLead('${l.id}')">
-        <div class="lead-card-top">
-          <div class="lead-name">${l.nome || 'Lead anônimo'}</div>
-          <div class="lead-status status-${l.status || 'Triagem'}">${l.status || 'Triagem'}</div>
-        </div>
-        <div class="lead-card-meta">
-          <div class="lead-phone">${formatPhone(l.wa_id)}</div>
-          <div class="lead-score-bar">
-            <span class="score-label">score</span>
-            <span class="score-value">${l.lead_score || 50}</span>
+    container.innerHTML = leads.map(l => {
+      const vendedoraNome = l.vendedoras ? l.vendedoras.nome : null;
+      return `
+        <div class="lead-card ${l.id === currentLeadId ? 'active' : ''}" onclick="selectLead('${l.id}')">
+          <div class="lead-card-top">
+            <div class="lead-name">${l.nome || 'Lead anônimo'}</div>
+            <div class="lead-status status-${l.status || 'Triagem'}">${l.status || 'Triagem'}</div>
           </div>
+          <div class="lead-card-meta">
+            <div class="lead-phone">${formatPhone(l.wa_id)}</div>
+            ${vendedoraNome ? `<div style="font-size:10px; color:var(--status-handoff); font-weight:600; background: var(--status-handoff-bg); padding: 2px 6px; border-radius: 4px;">👤 ${vendedoraNome}</div>` : `
+              <div class="lead-score-bar">
+                <span class="score-label">score</span>
+                <span class="score-value">${l.lead_score || 50}</span>
+              </div>
+            `}
+          </div>
+          <div class="lead-time">${timeAgo(l.last_message_at || l.created_at)}</div>
         </div>
-        <div class="lead-time">${timeAgo(l.last_message_at || l.created_at)}</div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   async function selectLead(leadId) {
@@ -719,16 +810,43 @@
     document.getElementById('chat-status').textContent = lead.status || 'Triagem';
     document.getElementById('chat-score').textContent = lead.lead_score || 50;
 
+    // Handoff Visibility
+    const handoffTag = document.getElementById('handoff-tag');
+    const vendedoraNomeEl = document.getElementById('vendedora-nome');
+    const handoffTimeEl = document.getElementById('handoff-time');
+    if (lead.status === 'Handoff' && lead.vendedoras) {
+      handoffTag.style.display = 'block';
+      vendedoraNomeEl.textContent = lead.vendedoras.nome;
+      handoffTimeEl.textContent = `Iniciado em: ${new Date(lead.updated_at).toLocaleString('pt-BR')}`;
+    } else {
+      handoffTag.style.display = 'none';
+    }
+
+    // AI Dossier Enhancement
+    const dossieCard = document.getElementById('dossie-card');
+    const dossieContent = document.getElementById('dossie-content');
+    
+    if (lead.resumo_joy) {
+      dossieContent.innerHTML = formatDossie(lead.resumo_joy);
+      dossieCard.style.display = 'block';
+    } else {
+      dossieCard.style.display = 'none';
+    }
+
     const container = document.getElementById('messages-container');
     container.innerHTML = '<div class="loading"><div class="spinner"></div> Carregando conversa...</div>';
 
     try {
       const msgs = await query('conversas', `?lead_id=eq.${leadId}&order=created_at.asc&limit=200`);
-      document.getElementById('chat-msgs-count').textContent = msgs.length;
       renderMessages(msgs);
     } catch(e) {
       container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Erro</h3><p>${e.message}</p></div>`;
     }
+  }
+
+  function toggleDossie() {
+    const card = document.getElementById('dossie-card');
+    card.style.display = card.style.display === 'none' ? 'block' : 'none';
   }
 
   function renderMessages(msgs) {
@@ -740,11 +858,33 @@
 
     container.innerHTML = msgs.map(m => {
       const isJoy = m.role === 'joy';
+      const isLead = m.role === 'lead';
+      const isVendedora = m.role === 'vendedora';
+      const isSystem = !isJoy && !isLead && !isVendedora;
+      
+      let avatar = '👤';
+      let senderName = 'Lead';
+      let rowClass = 'lead';
+
+      if (isJoy) {
+        avatar = '✨';
+        senderName = 'Hello Joy';
+        rowClass = 'joy';
+      } else if (isVendedora) {
+        avatar = '🤝';
+        senderName = 'Vendedora';
+        rowClass = 'joy role-vendedora'; // Align left like joy but with a different style
+      } else if (m.role === 'admin') {
+        avatar = '🛡️';
+        senderName = 'Admin';
+        rowClass = 'joy role-admin';
+      }
+
       return `
-        <div class="msg-row ${isJoy ? 'joy' : 'lead'}">
-          <div class="msg-avatar ${isJoy ? 'joy-avatar' : 'lead-avatar'}">${isJoy ? '✨' : '👤'}</div>
+        <div class="msg-row ${rowClass}">
+          <div class="msg-avatar ${isJoy ? 'joy-avatar' : 'lead-avatar'}">${avatar}</div>
           <div class="msg-content-wrapper">
-            <div class="msg-sender-name">${isJoy ? 'Hello Joy' : 'Lead'}</div>
+            <div class="msg-sender-name">${senderName}</div>
             <div class="msg-bubble">${escapeHtml(m.content)}</div>
             <div class="msg-time">${formatTime(m.created_at)}</div>
           </div>
@@ -753,6 +893,16 @@
     }).join('');
 
     container.scrollTop = container.scrollHeight;
+  }
+
+  function formatDossie(text) {
+    if (!text) return 'Aguardando insights...';
+    
+    // Converte blocos Markdown-ish para HTML Premium
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--accent);">$1</strong>')
+      .replace(/^[\s]*[-•*][\s]+(.*)$/gm, '<div style="margin-left:10px; margin-bottom:4px;">• $1</div>')
+      .split('\n').filter(l => l.trim()).join('<br>');
   }
 
   function escapeHtml(text) {
