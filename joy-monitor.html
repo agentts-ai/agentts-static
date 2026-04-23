@@ -75,7 +75,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg);
     color: var(--text);
     height: 100vh;
@@ -209,7 +209,7 @@
 
   /* SIDEBAR */
   .sidebar {
-    width: 340px;
+    width: 380px;
     flex-shrink: 0;
     border-right: 1px solid var(--border);
     display: flex;
@@ -220,22 +220,73 @@
   }
 
   .sidebar-header {
-    padding: 20px 24px 12px;
+    padding: 24px 24px 16px;
     background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 
-  .sidebar-title {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
+  .search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 12px 16px 12px 40px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.2s;
+    outline: none;
+  }
+
+  .search-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 14px;
     color: var(--text-muted);
-    font-weight: 600;
+    pointer-events: none;
+  }
+
+  .filter-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 0 4px;
+  }
+
+  .filter-tab {
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+  }
+
+  .filter-tab.active {
+    background: var(--surface);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: var(--shadow-sm);
   }
 
   .leads-list {
     flex: 1;
     overflow-y: auto;
-    padding: 12px 16px;
+    padding: 8px 16px 24px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -621,7 +672,17 @@
 <div class="main">
   <div class="sidebar">
     <div class="sidebar-header">
-      <div class="sidebar-title">Conversas ativas</div>
+      <div class="search-container">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <input type="text" id="lead-search" class="search-input" placeholder="Buscar por nome ou celular..." oninput="handleSearch()">
+      </div>
+      <div class="filter-tabs">
+        <div class="filter-tab active" data-filter="todos" onclick="setFilter('todos')">Todos</div>
+        <div class="filter-tab" data-filter="Triagem" onclick="setFilter('Triagem')">Triagem</div>
+        <div class="filter-tab" data-filter="Handoff" onclick="setFilter('Handoff')">Handoff</div>
+      </div>
     </div>
     <div class="leads-list" id="leads-list">
       <div class="loading"><div class="spinner"></div> Carregando...</div>
@@ -712,6 +773,8 @@
 
   let currentLeadId = null;
   let leads = [];
+  let currentFilter = 'todos';
+  let searchTerm = '';
 
   async function query(table, params = '') {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}${params}`, {
@@ -723,6 +786,19 @@
     });
     if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
     return res.json();
+  }
+
+  function handleSearch() {
+    searchTerm = document.getElementById('lead-search').value.toLowerCase();
+    renderLeads();
+  }
+
+  function setFilter(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.filter === filter);
+    });
+    renderLeads();
   }
 
   function formatPhone(wa_id) {
@@ -748,10 +824,24 @@
 
   async function init() {
     try {
-      // Join vendedoras(nome) para saber quem pegou o handoff
       leads = await query('leads', '?select=*,vendedoras(nome)&order=last_message_at.desc.nullslast,created_at.desc&limit=50');
       renderLeads();
       updateStats();
+      
+      // Se tiver lead selecionado, atualiza dados dele (nome pode ter mudado)
+      if (currentLeadId) {
+        const currentLead = leads.find(l => l.id === currentLeadId);
+        if (currentLead) {
+          document.getElementById('chat-name').textContent = currentLead.nome || 'Lead anônimo';
+          document.getElementById('chat-status').textContent = currentLead.status || 'Triagem';
+          
+          // Atualiza Dossie se mudou
+          const dossieContent = document.getElementById('dossie-content');
+          if (currentLead.resumo_joy) {
+            dossieContent.innerHTML = formatDossie(currentLead.resumo_joy);
+          }
+        }
+      }
     } catch(e) {
       document.getElementById('leads-list').innerHTML = `<div class="no-leads">Erro ao carregar.<br><small>${e.message}</small></div>`;
     }
@@ -763,19 +853,32 @@
 
     const today = new Date();
     today.setHours(0,0,0,0);
-    // msgs today — aproximação via leads criados hoje
     const todayLeads = leads.filter(l => new Date(l.created_at) >= today).length;
     document.getElementById('stat-msgs').textContent = todayLeads + ' leads';
   }
 
   function renderLeads() {
     const container = document.getElementById('leads-list');
-    if (!leads.length) {
+    
+    let filteredLeads = leads;
+    
+    if (currentFilter !== 'todos') {
+      filteredLeads = filteredLeads.filter(l => l.status === currentFilter);
+    }
+    
+    if (searchTerm) {
+      filteredLeads = filteredLeads.filter(l => 
+        (l.nome && l.nome.toLowerCase().includes(searchTerm)) || 
+        (l.wa_id && l.wa_id.includes(searchTerm))
+      );
+    }
+
+    if (!filteredLeads.length) {
       container.innerHTML = '<div class="no-leads">Nenhum lead encontrado.</div>';
       return;
     }
 
-    container.innerHTML = leads.map(l => {
+    container.innerHTML = filteredLeads.map(l => {
       const vendedoraNome = l.vendedoras ? l.vendedoras.nome : null;
       return `
         <div class="lead-card ${l.id === currentLeadId ? 'active' : ''}" onclick="selectLead('${l.id}')">
@@ -810,7 +913,6 @@
     document.getElementById('chat-status').textContent = lead.status || 'Triagem';
     document.getElementById('chat-score').textContent = lead.lead_score || 50;
 
-    // Handoff Visibility
     const handoffTag = document.getElementById('handoff-tag');
     const vendedoraNomeEl = document.getElementById('vendedora-nome');
     const handoffTimeEl = document.getElementById('handoff-time');
@@ -822,7 +924,6 @@
       handoffTag.style.display = 'none';
     }
 
-    // AI Dossier Enhancement
     const dossieCard = document.getElementById('dossie-card');
     const dossieContent = document.getElementById('dossie-content');
     
@@ -856,11 +957,24 @@
       return;
     }
 
-    container.innerHTML = msgs.map(m => {
+    // Agrupamento de mensagens por tempo (60 segundos) e remetente
+    const groupedMsgs = [];
+    msgs.forEach(m => {
+      const last = groupedMsgs[groupedMsgs.length - 1];
+      const mTime = new Date(m.created_at).getTime();
+      
+      if (last && last.role === m.role && (mTime - new Date(last.created_at).getTime()) < 60000) {
+        last.content += '\n' + m.content;
+        last.created_at = m.created_at; // Atualiza para o horário da última
+      } else {
+        groupedMsgs.push({...m});
+      }
+    });
+
+    container.innerHTML = groupedMsgs.map(m => {
       const isJoy = m.role === 'joy';
       const isLead = m.role === 'lead';
       const isVendedora = m.role === 'vendedora';
-      const isSystem = !isJoy && !isLead && !isVendedora;
       
       let avatar = '👤';
       let senderName = 'Lead';
@@ -873,7 +987,7 @@
       } else if (isVendedora) {
         avatar = '🤝';
         senderName = 'Vendedora';
-        rowClass = 'joy role-vendedora'; // Align left like joy but with a different style
+        rowClass = 'joy role-vendedora';
       } else if (m.role === 'admin') {
         avatar = '🛡️';
         senderName = 'Admin';
@@ -885,7 +999,7 @@
           <div class="msg-avatar ${isJoy ? 'joy-avatar' : 'lead-avatar'}">${avatar}</div>
           <div class="msg-content-wrapper">
             <div class="msg-sender-name">${senderName}</div>
-            <div class="msg-bubble">${escapeHtml(m.content)}</div>
+            <div class="msg-bubble">${escapeHtml(m.content).replace(/\n/g, '<br>')}</div>
             <div class="msg-time">${formatTime(m.created_at)}</div>
           </div>
         </div>
@@ -898,7 +1012,6 @@
   function formatDossie(text) {
     if (!text) return 'Aguardando insights...';
     
-    // Converte blocos Markdown-ish para HTML Premium
     return text
       .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--accent);">$1</strong>')
       .replace(/^[\s]*[-•*][\s]+(.*)$/gm, '<div style="margin-left:10px; margin-bottom:4px;">• $1</div>')
@@ -909,20 +1022,18 @@
     return (text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  // Auto-refresh a cada 30s — não reseta scroll da conversa aberta
   setInterval(async () => {
     await init();
     if (currentLeadId) {
       try {
         const msgs = await query('conversas', `?lead_id=eq.${currentLeadId}&order=created_at.asc&limit=200`);
         const container = document.getElementById('messages-container');
-        const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
-        document.getElementById('chat-msgs-count').textContent = msgs.length;
+        const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
         renderMessages(msgs);
         if (atBottom) container.scrollTop = container.scrollHeight;
       } catch(e) {}
     }
-  }, 30000);
+  }, 15000); // 15s para parecer mais real-time
 
   init();
 </script>
