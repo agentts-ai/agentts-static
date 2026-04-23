@@ -1,6 +1,646 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Agentts.ai</title></head>
-<body style="background:#0a0a0f;color:#fff;font-family:sans-serif;text-align:center;padding:60px">
-<h1 style="color:#8b5cf6">Agentts.ai</h1>
-<p><a href="/privacidade.html" style="color:#c4b5fd">Política de Privacidade</a> &nbsp;|&nbsp; <a href="/termos.html" style="color:#c4b5fd">Termos de Serviço</a></p>
-</body></html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Joy Monitor • Agentts.AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      /* Palette inspired by Joy Dashboard Official */
+      --joy-black: #0A0508;
+      --joy-onyx: #120D10;
+      --joy-gold: #C5A059;
+      --joy-gold-rgb: 197, 160, 89;
+      --joy-cream: #FCFAF7;
+      --joy-text: #F5EDF1;
+      --joy-text-muted: rgba(245, 237, 241, 0.5);
+      --joy-glass: rgba(255, 255, 255, 0.03);
+      --joy-border: rgba(197, 160, 89, 0.15);
+      --joy-accent-gradient: linear-gradient(135deg, #C5A059 0%, #E8D2A6 100%);
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--joy-black);
+      color: var(--joy-text);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    h1, h2, h3, .serif {
+      font-family: 'Playfair Display', serif;
+    }
+
+    /* Glassmorphism Effects */
+    .glass-panel {
+      background: var(--joy-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--joy-border);
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    .glass-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--joy-gold);
+      transform: translateY(-2px);
+    }
+
+    .glass-card.active {
+      background: rgba(197, 160, 89, 0.1);
+      border-color: var(--joy-gold);
+      box-shadow: 0 0 20px rgba(197, 160, 89, 0.1);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { 
+      background: var(--joy-gold); 
+      border-radius: 10px;
+      opacity: 0.3;
+    }
+
+    /* Shimmer Animation */
+    .shimmer {
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+      background-size: 200% 100%;
+      animation: shimmer 3s infinite linear;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* Status Badges */
+    .status-triagem { border-color: rgba(255, 255, 255, 0.3); color: white; }
+    .status-handoff { border-color: var(--joy-gold); color: var(--joy-gold); background: rgba(197, 160, 89, 0.05); }
+
+    /* Chat Bubbles */
+    .bubble-lead {
+      background: rgba(255, 255, 255, 0.05);
+      border-bottom-left-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: #E2E8F0;
+    }
+    .bubble-joy {
+      background: rgba(197, 160, 89, 0.08); 
+      border-bottom-right-radius: 4px;
+      border-right: 2px solid var(--joy-gold);
+      color: #F8FAFC;
+    }
+    .bubble-vendedora {
+      background: rgba(16, 185, 129, 0.08); 
+      border-bottom-right-radius: 4px;
+      border-right: 2px solid #10B981;
+      color: #F8FAFC;
+    }
+
+    /* Message lines spacing */
+    .message-content {
+      white-space: pre-line;
+      word-break: break-word;
+    }
+    
+    .message-line {
+      display: block;
+      margin-top: 0.25rem;
+    }
+    .message-line:first-child { margin-top: 0; }
+
+    /* Dossier Styling */
+    .dossie-section {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(197, 160, 89, 0.1);
+    }
+    .dossie-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+    .dossie-header {
+      font-family: 'Playfair Display', serif;
+      color: var(--joy-gold);
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* Animations */
+    @keyframes fadeInSlide {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in { animation: fadeInSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+    /* Responsive adjustments */
+    @media (max-width: 1024px) {
+      .sidebar-collapsed { width: 80px; }
+      .dossie-collapsed { display: none; }
+    }
+  </style>
+</head>
+<body class="flex flex-col">
+
+  <!-- TOP BAR -->
+  <header class="h-20 flex items-center justify-between px-8 border-b border-[#C5A05920] glass-panel z-50">
+    <div class="flex items-center gap-6">
+      <div class="flex flex-col">
+        <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
+          <span class="bg-clip-text text-transparent bg-gradient-to-r from-[#C5A059] to-[#E8D2A6]">JOY MONITOR</span>
+          <span class="text-[10px] tracking-[0.3em] font-sans font-bold text-[#C5A059] border border-[#C5A05940] px-2 py-0.5 rounded uppercase">Agentts.AI</span>
+        </h1>
+      </div>
+      <div class="h-8 w-px bg-white/10 mx-2"></div>
+      <div class="flex items-center gap-8">
+        <div class="flex flex-col">
+          <span class="text-[10px] uppercase tracking-widest text-[#C5A059] font-bold">Total Leads</span>
+          <span id="stat-total" class="text-xl font-medium">0</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-[10px] uppercase tracking-widest text-[#C5A059] font-bold">Handoffs</span>
+          <span id="stat-handoff" class="text-xl font-medium">0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <div id="sync-status" class="text-[9px] uppercase tracking-widest text-[#C5A05980] font-bold pr-4 flex items-center gap-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#C5A059] animate-pulse"></span>
+        Sincronizando em tempo real
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 flex overflow-hidden">
+    <!-- SIDEBAR -->
+    <aside class="w-[400px] border-r border-[#C5A05920] flex flex-col glass-panel">
+      <div class="p-6 space-y-6">
+        <!-- Search -->
+        <div class="relative group">
+          <svg class="absolute left-4 top-1/2 -translate-y-1/2 text-[#C5A059] group-focus-within:scale-110 transition-transform" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="lead-search" oninput="handleSearch()" placeholder="Buscar por nome ou celular..." 
+            class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-[#C5A05960] focus:ring-1 focus:ring-[#C5A05930] transition-all">
+        </div>
+        
+        <!-- Filters -->
+        <div class="flex p-1 bg-white/5 rounded-xl">
+          <button onclick="setFilter('todos')" data-filter="todos" class="filter-tab active flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all">Todos</button>
+          <button onclick="setFilter('Triagem')" data-filter="Triagem" class="filter-tab flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all">Triagem</button>
+          <button onclick="setFilter('Handoff')" data-filter="Handoff" class="filter-tab flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all">Handoff</button>
+        </div>
+      </div>
+
+      <div id="leads-list" class="flex-1 overflow-y-auto px-6 pb-12 space-y-3 custom-scrollbar">
+        <!-- Leads show here -->
+      </div>
+    </aside>
+
+    <!-- CONTENT AREA -->
+    <section class="flex-1 flex flex-col relative">
+      <!-- Welcome / Empty State -->
+      <div id="welcome-state" class="absolute inset-0 flex flex-col items-center justify-center text-center p-12 bg-[#0A0508] z-40 transition-all duration-500">
+        <div class="w-32 h-32 mb-8 bg-gradient-to-br from-[#C5A05920] to-transparent rounded-[2.5rem] flex items-center justify-center border border-[#C5A05940] relative">
+          <div class="absolute inset-4 bg-joy-gold/5 rounded-[1.5rem] animate-pulse"></div>
+          <svg class="text-[#C5A059] relative z-10" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
+        </div>
+        <h2 class="text-4xl font-bold mb-4 serif tracking-tight">Pronta para Brilhar?</h2>
+        <p class="text-[#F5EDF160] max-w-sm mx-auto leading-relaxed font-medium">Selecione um lead ao lado para acessar o dossiê estratégico e monitorar a conversa ao vivo com a Joy AI.</p>
+        <div class="mt-12 grid grid-cols-3 gap-6 w-full max-w-lg opacity-40">
+           <div class="h-px bg-gradient-to-r from-transparent via-[#C5A059] to-transparent"></div>
+           <div class="text-[9px] uppercase tracking-[0.4em] text-[#C5A059] font-black">Agentts Intelligence</div>
+           <div class="h-px bg-gradient-to-r from-[#C5A059] via-[#C5A059] to-transparent"></div>
+        </div>
+      </div>
+
+      <!-- Active Chat View -->
+      <div id="chat-view" class="flex-1 flex flex-col opacity-0 pointer-events-none transition-all duration-500 transform translate-y-4">
+        <!-- Chat Header -->
+        <div class="p-8 border-b border-[#C5A05920] flex items-center justify-between glass-panel z-10">
+          <div class="flex items-center gap-6">
+            <div id="lead-initials" class="w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-[#C5A059] to-[#E8D2A6] text-black font-black text-2xl flex items-center justify-center shadow-xl shadow-joy-gold/10">—</div>
+            <div class="space-y-1">
+              <h2 id="chat-name" class="text-3xl font-bold serif tracking-tight">—</h2>
+              <div class="flex items-center gap-4">
+                <p id="chat-phone" class="text-sm text-[#F5EDF160] font-bold tracking-tight">—</p>
+                <div class="h-1 w-1 rounded-full bg-white/20"></div>
+                <p id="chat-procedure" class="text-[10px] text-joy-gold font-black uppercase tracking-widest">Procedimento Geral</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-8">
+            <div id="handoff-pill" class="hidden animate-in">
+              <div class="flex items-center gap-3 px-6 py-3 rounded-2xl border border-[#C5A05960] bg-[#C5A05910] shadow-premium">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C5A059] opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-[#C5A059]"></span>
+                </span>
+                <span class="text-[10px] font-black text-[#C5A059] uppercase tracking-[0.2em]">Handoff: <span id="vendedora-nome" class="text-white">...</span></span>
+              </div>
+            </div>
+            <div class="h-10 w-px bg-white/10"></div>
+            <div class="flex flex-col items-end">
+              <span class="text-[9px] font-black uppercase tracking-[0.2em] text-joy-gold mb-1">Status do Lead</span>
+              <span id="chat-status" class="text-sm font-bold text-white tracking-widest uppercase py-1 px-3 rounded-lg border border-white/10 bg-white/5">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex-1 flex overflow-hidden">
+          <!-- Messages -->
+          <div class="flex-1 flex flex-col bg-[#080406]">
+            <div id="messages-container" class="flex-1 overflow-y-auto p-12 space-y-10 scroll-smooth custom-scrollbar">
+              <!-- Messages show here -->
+            </div>
+          </div>
+
+          <!-- Dossier Sidebar -->
+          <div class="w-[480px] border-l border-[#C5A05920] glass-panel flex flex-col z-10 overflow-hidden">
+            <!-- Fixed Header + Score Section -->
+            <div class="p-10 pb-6 space-y-8 border-b border-white/5">
+              <div class="flex items-center justify-between">
+                <div class="space-y-1">
+                  <h3 class="text-xl font-bold serif tracking-tight text-white">Dossiê Estratégico</h3>
+                  <p class="text-[9px] uppercase tracking-[0.3em] text-[#C5A059] font-black">Joy AI Analysis</p>
+                </div>
+                <div class="flex h-12 w-12 rounded-2xl bg-joy-gold/10 border border-joy-gold/20 items-center justify-center text-joy-gold shadow-premium relative group">
+                  <div class="absolute inset-0 bg-joy-gold/20 rounded-2xl blur-sm group-hover:blur-md transition-all"></div>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="relative z-10"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                </div>
+              </div>
+
+              <!-- QUALIFICAÇÃO & SCORE (NOW AT TOP) -->
+              <div class="bg-white/5 rounded-3xl p-6 space-y-6 border border-white/5 shadow-premium">
+                <div class="flex justify-between items-end mb-2">
+                  <span class="text-[10px] uppercase tracking-[0.2em] font-black text-white/40">Potencial de Fechamento</span>
+                  <span id="chat-score" class="text-2xl font-bold serif text-joy-gold">—</span>
+                </div>
+                <div class="h-2 w-full bg-white/5 rounded-full p-0.5 border border-white/5 overflow-hidden">
+                  <div id="score-bar" class="h-full bg-gradient-to-r from-[#C5A059] to-[#E8D2A6] rounded-full transition-all duration-1000 shadow-[0_0_15px_#C5A05980]" style="width: 0%"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                   <div class="py-2 px-3 rounded-xl bg-white/[0.02] border border-white/5 text-center transition-hover hover:bg-white/[0.05]">
+                      <span class="block text-[8px] uppercase tracking-widest text-white/40 font-bold mb-0.5">Início</span>
+                      <span id="chat-created" class="text-[10px] font-bold text-white">—</span>
+                   </div>
+                   <div class="py-2 px-3 rounded-xl bg-white/[0.02] border border-white/5 text-center transition-hover hover:bg-white/[0.05]">
+                      <span class="block text-[8px] uppercase tracking-widest text-white/40 font-bold mb-0.5">Última Msg</span>
+                      <span id="chat-last" class="text-[10px] font-bold text-white">—</span>
+                   </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Scrollable Dossier Content -->
+            <div class="flex-1 overflow-y-auto p-10 py-6 custom-scrollbar">
+              <div id="dossie-box" class="relative group">
+                <div class="absolute -inset-1 bg-gradient-to-b from-joy-gold/20 to-transparent rounded-[2rem] blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+                <div id="dossie-content" class="relative bg-white/[0.01] border border-white/5 rounded-[2rem] p-8 text-sm leading-[1.8] text-[#E2E8F0] space-y-6">
+                  <!-- Dossier content shows here -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Action Section -->
+            <div class="p-10 pt-6 border-t border-white/5">
+               <button class="w-full py-4 rounded-2xl bg-[#C5A059] text-black font-black text-[10px] uppercase tracking-[0.3em] shadow-premium hover:scale-[1.02] active:scale-95 transition-all">
+                  Gerar Encaminhamento PDF
+               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <style>
+    .filter-tab.active {
+      background: var(--joy-gold);
+      color: black;
+      box-shadow: 0 4px 15px rgba(197, 160, 89, 0.2);
+    }
+    .filter-tab:not(.active) { color: var(--joy-text-muted); }
+    .filter-tab:not(.active):hover { color: var(--joy-text); }
+    
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(197, 160, 89, 0.2); border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(197, 160, 89, 0.4); }
+  </style>
+
+  <script>
+    // ⚙️ CONFIG DE PRODUÇÃO (VERCEL READY)
+    const SUPABASE_URL = 'https://icguhkxpbverfrbyxtup.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljZ3Voa3hwYnZlcmZyYnl4dHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMjc3NzgsImV4cCI6MjA5MTYwMzc3OH0.JX2UKNjr5wABRRNQ6f3uQWO-foxyl5ScPLHPEmh9HpY';
+
+    console.log('BUILD_ID: V2.1-PRODUCTION-VERCEL'); 
+
+    let currentLeadId = null;
+    let leads = [];
+    let currentFilter = 'todos';
+    let searchTerm = '';
+    let isSyncing = false;
+    let lastMsgsHash = '';
+
+    async function query(table, params = '') {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}${params}`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+      return res.json();
+    }
+
+    function handleSearch() {
+      searchTerm = document.getElementById('lead-search').value.toLowerCase();
+      renderLeads();
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.filter === filter);
+      });
+      renderLeads();
+    }
+
+    function formatPhone(wa_id) {
+      if (!wa_id) return '—';
+      let n = wa_id.replace(/\D/g, '');
+      if (n.startsWith('55')) n = n.slice(2);
+      
+      if (n.length === 11) return `+55 (${n.slice(0, 2)}) ${n.slice(2, 7)}-${n.slice(7)}`;
+      if (n.length === 10) return `+55 (${n.slice(0, 2)}) ${n.slice(2, 6)}-${n.slice(6)}`;
+      return `+${wa_id.replace(/\D/g, '')}`;
+    }
+
+    function timeAgo(dateStr) {
+      if (!dateStr) return '—';
+      const diff = Date.now() - new Date(dateStr).getTime();
+      const m = Math.floor(diff / 60000);
+      if (m < 1) return 'agora';
+      if (m < 60) return `${m}m atrás`;
+      const h = Math.floor(m / 60);
+      if (h < 24) return `${h}h atrás`;
+      return `${Math.floor(h/24)}d atrás`;
+    }
+
+    async function init() {
+      try {
+        const data = await query('leads', '?select=*,vendedoras(nome)&order=last_message_at.desc.nullslast,created_at.desc&limit=100');
+        
+        // Use real data if available, otherwise fallback to empty to avoid mocks in production
+        leads = (data && data.length > 0) ? data : [];
+
+        renderLeads();
+        updateStats();
+
+        if (currentLeadId) {
+          const currentLead = leads.find(l => l.id === currentLeadId);
+          if (currentLead) {
+            updateHeader(currentLead);
+          }
+        }
+      } catch(e) {
+        console.error('Init Error:', e);
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('stat-total').innerText = leads.length;
+      document.getElementById('stat-handoff').innerText = leads.filter(l => l.status === 'Handoff').length;
+    }
+
+    function renderLeads() {
+      const container = document.getElementById('leads-list');
+      let filtered = leads;
+      
+      if (currentFilter !== 'todos') filtered = filtered.filter(l => l.status === currentFilter);
+      if (searchTerm) filtered = filtered.filter(l => 
+        (l.nome && l.nome.toLowerCase().includes(searchTerm)) || 
+        (l.wa_id && l.wa_id.includes(searchTerm))
+      );
+
+      if (!filtered.length) {
+        container.innerHTML = '<div class="p-12 text-center text-[#F5EDF140] text-[10px] font-black uppercase tracking-[0.2em]">Nenhum lead encontrado</div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map((l, i) => {
+        const isActive = l.id === currentLeadId;
+        const initials = (l.nome || 'L').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+        const hasDossie = !!l.resumo_joy;
+        return `
+          <div onclick="selectLead('${l.id}')" class="group relative glass-card p-5 rounded-[1.5rem] cursor-pointer ${isActive ? 'active shadow-premium shadow-joy-gold/5' : 'bg-white/5'} animate-in" style="animation-delay: ${i * 30}ms">
+            <div class="flex items-center gap-5">
+              <div class="w-12 h-12 rounded-2xl ${isActive ? 'bg-joy-gold text-black' : 'bg-white/5 text-[#C5A059]'} flex items-center justify-center text-xs font-black transition-all duration-500">${initials}</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between mb-1">
+                  <h4 class="font-bold text-sm truncate tracking-tight ${isActive ? 'text-white' : 'text-white/80'}">${l.nome || 'Lead anônimo'}</h4>
+                  <span class="text-[9px] text-joy-gold font-black uppercase tracking-widest">${timeAgo(l.last_message_at || l.created_at)}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <p class="text-[10px] text-[#F5EDF140] font-bold tracking-tighter">${formatPhone(l.wa_id)}</p>
+                  <div class="flex items-center gap-2">
+                    ${hasDossie ? '<span class="text-[8px] text-joy-gold/60 font-black tracking-[0.2em] font-sans">INSIGHTS</span>' : ''}
+                    <div class="w-1.5 h-1.5 rounded-full ${l.status === 'Handoff' ? 'bg-[#C5A059] shadow-[0_0_5px_#C5A059]' : 'bg-white/10'}"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function selectLead(id) {
+      currentLeadId = id;
+      const lead = leads.find(l => l.id === id);
+      
+      const welcome = document.getElementById('welcome-state');
+      const chat = document.getElementById('chat-view');
+      
+      welcome.style.opacity = '0';
+      welcome.style.transform = 'scale(0.95)';
+      setTimeout(() => welcome.classList.add('hidden'), 300);
+      
+      chat.style.display = 'flex';
+      setTimeout(() => {
+        chat.style.opacity = '1';
+        chat.style.pointerEvents = 'auto';
+        chat.style.transform = 'translateY(0)';
+      }, 50);
+      
+      updateHeader(lead);
+      renderLeads();
+      
+      const container = document.getElementById('messages-container');
+      container.innerHTML = `
+        <div class="flex-1 flex flex-col items-center justify-center gap-4 opacity-40">
+          <div class="w-12 h-12 border-2 border-joy-gold border-t-transparent rounded-full animate-spin"></div>
+          <p class="text-[10px] font-black uppercase tracking-[0.3em] text-joy-gold">Recuperando histórico premium</p>
+        </div>
+      `;
+
+      try {
+        const params = `?lead_id=eq.${id}&order=created_at.asc&limit=200`;
+        const msgs = await query('conversas', params);
+        renderMessages(msgs, lead);
+      } catch(e) {
+        console.error('Chat Error:', e);
+      }
+    }
+
+    function updateHeader(l) {
+      document.getElementById('chat-name').innerText = l.nome || 'Lead anônimo';
+      document.getElementById('chat-phone').innerText = formatPhone(l.wa_id);
+      document.getElementById('chat-status').innerText = l.status || 'Triagem';
+      document.getElementById('chat-score').innerText = `${l.lead_score || 50}`;
+      document.getElementById('score-bar').style.width = `${l.lead_score || 50}%`;
+      document.getElementById('lead-initials').innerText = (l.nome || 'L').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+      document.getElementById('chat-procedure').innerText = l.procedimento_interesse || 'Procedimento Geral';
+      document.getElementById('chat-created').innerText = new Date(l.created_at).toLocaleDateString('pt-BR');
+      document.getElementById('chat-last').innerText = l.last_message_at ? new Date(l.last_message_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '—';
+      
+      const handoffPill = document.getElementById('handoff-pill');
+      if (l.status === 'Handoff' && l.vendedoras) {
+        handoffPill.classList.remove('hidden');
+        document.getElementById('vendedora-nome').innerText = l.vendedoras.nome;
+      } else {
+        handoffPill.classList.add('hidden');
+      }
+
+      document.getElementById('dossie-content').innerHTML = l.resumo_joy ? formatDossie(l.resumo_joy) : `
+        <div class="flex flex-col items-center justify-center py-20 gap-4 opacity-30 animate-pulse">
+          <div class="relative">
+            <div class="absolute -inset-4 bg-joy-gold/10 rounded-full blur-xl"></div>
+            <svg class="text-joy-gold relative" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          </div>
+          <div class="text-center space-y-2">
+            <p class="text-[11px] font-black uppercase tracking-[0.3em] text-joy-gold">Aguardando Análise Estratégica</p>
+            <p class="text-[9px] text-white/40 max-w-[240px] leading-relaxed mx-auto">A Joy AI está processando as intenções, dores e o potencial de conversão deste lead em tempo real.</p>
+          </div>
+        </div>
+      `;
+      
+      lastMsgsHash = ''; 
+    }
+
+    function renderMessages(msgs, lead) {
+      const container = document.getElementById('messages-container');
+      if (!msgs.length) {
+        container.innerHTML = '<div class="flex-1 flex flex-col items-center justify-center text-[#F5EDF120] uppercase tracking-[0.4em] text-[10px] font-black">Nenhuma interação registrada</div>';
+        return;
+      }
+
+      const grouped = [];
+      msgs.forEach(m => {
+        const last = grouped[grouped.length - 1];
+        const sameRole = last && last.role === m.role;
+        const timeDiff = last && (new Date(m.created_at).getTime() - new Date(last.created_at).getTime()) < 60000;
+        
+        if (sameRole && timeDiff) {
+            last.content += '\n' + m.content;
+        } else {
+            grouped.push({...m});
+        }
+      });
+
+      const currentHash = JSON.stringify(msgs);
+      if (currentHash === lastMsgsHash) return;
+      lastMsgsHash = currentHash;
+
+      const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+
+      container.innerHTML = grouped.map(m => {
+        const isJoy = m.role === 'joy' || m.role === 'assistant';
+        const isVendedora = m.role === 'vendedora' || m.role === 'admin';
+        const bubbleClass = isJoy ? 'bubble-joy self-end' : (isVendedora ? 'bubble-vendedora self-end' : 'bubble-lead self-start');
+        const roleLabel = isJoy ? 'Joy Intelligence' : (isVendedora ? 'Vendedora' : (lead.nome || 'Paciente'));
+        
+        const lines = escapeHtml(m.content).split('\n').map(line => `<span class="message-line">${line}</span>`).join('');
+        
+        return `
+          <div class="flex flex-col ${bubbleClass.includes('self-end') ? 'items-end' : 'items-start'} max-w-[85%] group animate-in">
+            <div class="flex items-center gap-3 mb-2 px-2">
+              <span class="text-[9px] uppercase tracking-[0.2em] font-black text-[#F5EDF140]">${roleLabel}</span>
+              <span class="text-[9px] text-[#F5EDF120] font-bold">${new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+            </div>
+            <div class="p-6 rounded-[2rem] ${bubbleClass.split(' ')[0]} text-sm leading-[1.6] shadow-sm transition-all group-hover:scale-[1.01] hover:shadow-premium message-content">
+              ${lines}
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      if (isAtBottom) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+
+    function formatDossie(text) {
+      if (!text) return '';
+      const safeText = escapeHtml(text);
+      const sections = safeText.split(/(?=#{1,4}\s|\*\*[^*]+\*\*[:\n])/g);
+      
+      return sections.map(s => {
+        const trimmed = s.trim();
+        if (!trimmed) return '';
+        let header = '';
+        let content = trimmed;
+        const headerMatch = trimmed.match(/^#{1,4}\s+(.*)/) || trimmed.match(/^\*\*(.*)\*\*[:\n]/);
+        if (headerMatch) {
+          header = `<div class="dossie-header">${headerMatch[1]}</div>`;
+          content = trimmed.replace(headerMatch[0], '').trim();
+        }
+        content = content
+          .replace(/\*\*(.*?)\*\*/g, '<strong class="text-joy-gold font-bold">$1</strong>')
+          .replace(/^[\s]*[-•*][\s]+(.*)$/gm, '<div class="flex gap-3 mb-2"><span class="text-joy-gold text-xs">✦</span><span class="text-white/80">$1</span></div>')
+          .replace(/\n/g, '<br>');
+        return `<div class="dossie-section">${header}${content}</div>`;
+      }).join('');
+    }
+
+    function escapeHtml(t) { 
+        if(!t) return '';
+        return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); 
+    }
+
+    async function syncLoop() {
+      if (isSyncing) return;
+      isSyncing = true;
+      try {
+        await init();
+        if (currentLeadId) {
+          const params = `?lead_id=eq.${currentLeadId}&order=created_at.asc&limit=200`;
+          const msgs = await query('conversas', params);
+          const lead = leads.find(l => l.id === currentLeadId);
+          renderLeads();
+          if (lead) renderMessages(msgs, lead);
+        }
+      } catch(e) {
+        console.error('Sync Error:', e);
+      } finally {
+        isSyncing = false;
+        setTimeout(syncLoop, 10000);
+      }
+    }
+
+    syncLoop();
+    init();
+  </script>
+</body>
+</html>
